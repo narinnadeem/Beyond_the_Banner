@@ -1,0 +1,62 @@
+/* Four visually distinct fictional review websites + a shared, neutral cookie banner. */
+* { box-sizing: border-box; }
+body { margin: 0; }
+.site-inner { max-width: 760px; margin: 0 auto; padding: 0 16px; }
+.site-head { padding: 18px 0 14px; }
+.site-head .site-inner:first-child { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.logo { font-weight: 800; font-size: 24px; text-decoration: none; }
+nav a { margin-left: 16px; text-decoration: none; font-size: 15px; }
+.tagline { font-size: 14px; opacity: .8; margin-top: 4px; }
+.article { padding-top: 22px; padding-bottom: 48px; }
+.article h1 { line-height: 1.2; margin: 6px 0 8px; }
+.cat { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; font-weight: 700; }
+.byline { font-size: 14px; opacity: .7; margin-bottom: 18px; }
+.article p { margin: 0 0 16px; }
+.note { font-size: 13px; opacity: .7; border-top: 1px solid rgba(0,0,0,.12); padding-top: 12px; }
+.site-foot { padding: 22px 0 120px; font-size: 13px; }
+
+/* Study instruction bar: deliberately neutral, outside the site's design. Identical in every condition. */
+.studybar { position: sticky; top: 0; z-index: 50; background: #26262a; color: #f1f1f1;
+  font: 16px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; display: flex; align-items: center;
+  justify-content: space-between; gap: 14px; padding: 12px 16px 14px; }
+.studybar .sb-text strong { display: block; font-size: 17px; }
+.studybar .sb-text span { opacity: .85; font-size: 15px; }
+.studybar button { font: inherit; font-weight: 700; border: 0; border-radius: 10px; padding: 12px 18px; min-height: 48px; background: #fff; color: #222; cursor: pointer; white-space: nowrap; }
+.studybar button.ready { background: #7c83ff; color: #fff; }
+.studybar button.keep { background: transparent; color: #fff; border: 2px solid #8a8a94; }
+.studybar .sb-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.studybar button[hidden] { display: none; }
+.studybar button:focus-visible { outline: 3px solid #c3c6ff; outline-offset: 2px; }
+.studybar .sb-prog { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: #44444a; }
+.studybar .sb-prog i { display: block; height: 100%; width: 0; background: #7c83ff; transition: width 1s linear; }
+@media (max-width: 560px) { .studybar { gap: 10px; padding: 10px 12px 12px; } .studybar .sb-text strong { font-size: 16px; } .studybar .sb-text span { font-size: 13px; display: block; line-height: 1.3; }
+  .studybar button { font-size: 15px; padding: 8px 12px; min-height: 48px; white-space: normal; max-width: 150px; line-height: 1.2; } }
+
+/* Theme 1: FixCompare — techy, blue */
+.theme-fix { background: #f4f7fb; color: #172033; font: 17px/1.65 "Segoe UI", Roboto, Arial, sans-serif; }
+.theme-fix .site-head { background: #1b3a6b; color: #fff; } .theme-fix .site-head a { color: #fff; }
+.theme-fix .cat { color: #2b6cd4; } .theme-fix .site-foot { background: #e6ecf5; }
+
+/* Theme 2: TiffinTrack — warm, food blog */
+.theme-tiffin { background: #fff8ef; color: #3a2a1a; font: 17px/1.7 Georgia, "Times New Roman", serif; }
+.theme-tiffin .site-head { background: #fff; border-bottom: 4px solid #e2711d; } .theme-tiffin .logo { color: #e2711d; font-style: italic; }
+.theme-tiffin nav a { color: #6b4a2b; } .theme-tiffin .cat { color: #b5541a; } .theme-tiffin .site-foot { background: #f6e6d2; }
+
+/* Theme 3: TutorTally — clean, academic green */
+.theme-tutor { background: #ffffff; color: #1f2d27; font: 17px/1.65 "Trebuchet MS", Verdana, sans-serif; }
+.theme-tutor .site-head { background: #e8f3ee; } .theme-tutor .logo { color: #1e6b4a; letter-spacing: -.02em; }
+.theme-tutor nav a { color: #1e6b4a; } .theme-tutor .cat { color: #1e6b4a; } .theme-tutor .site-foot { background: #1e6b4a; color: #e8f3ee; }
+
+/* Theme 4: GymGuide — dark, bold */
+.theme-gym { background: #141414; color: #e9e9e9; font: 17px/1.65 Arial, Helvetica, sans-serif; }
+.theme-gym .site-head { background: #000; border-bottom: 2px solid #d4ff3a; } .theme-gym .logo { color: #d4ff3a; text-transform: uppercase; }
+.theme-gym nav a { color: #ccc; } .theme-gym .cat { color: #d4ff3a; } .theme-gym .note { border-color: #333; } .theme-gym .site-foot { background: #0a0a0a; color: #999; }
+
+/* Cookie banner: identical on every banner page; Accept and Reject equal in size, colour and position */
+#cookie-banner { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: #ffffff; color: #1d1d1b;
+  border-top: 1px solid #d6d6d6; box-shadow: 0 -6px 20px rgba(0,0,0,.15); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.cb-inner { max-width: 760px; margin: 0 auto; padding: 14px 16px; }
+.cb-text { margin: 0 0 10px; } .cb-more { margin: 0 0 10px; font-size: 14px; color: #555; }
+.cb-link { background: none; border: 0; padding: 0; color: #1b4fa0; text-decoration: underline; cursor: pointer; font: inherit; }
+.cb-actions { display: flex; gap: 10px; }
+.cb-btn { flex: 1; font: inherit; font-weight: 600; padding: 10px; border-radius: 6px; border: 2px solid #1d1d1b; background: #ffffff; color: #1d1d1b; cursor: pointer; }

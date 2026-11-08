@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Questions – Study</title>
+<link rel="stylesheet" href="/static/css/study.css"><link rel="stylesheet" href="/static/css/ui.css"></head>
+<body class="ui"><main class="shell">
+  <div class="topbar"><p class="brand-chip">Research study</p><span class="where" id="where"></span></div>
+  <div class="sites-progress" id="prog" aria-hidden="true"></div>
+  <div class="bar" id="bar" role="progressbar" aria-label="Questions for this website"><i></i></div>
+  <div class="steplabel" id="steplabel">Loading…</div>
+
+  <form id="f" novalidate>
+    <div id="steps"></div>
+    <p class="error" id="err" role="alert" aria-live="assertive"></p>
+    <div class="actions">
+      <button type="button" class="secondary" id="back" hidden>← Back</button>
+      <span class="grow"></span>
+      <button type="button" class="next" id="next">Next →</button>
+    </div>
+  </form>
+</main>
+<script src="/static/js/ui.js"></script>
+<script>
+(async function () {
+  var t0 = performance.now(), esc = UI.esc;
+  var parts = location.pathname.split('/'), pid = parts[2], n = parts[4];
+  var d;
+  try { d = await (await fetch('/api/p/' + pid + '/q/' + n)).json(); }
+  catch (e) { document.getElementById('steplabel').textContent = 'Could not load the questions. Please refresh the page.'; return; }
+  var site = esc(d.siteName);
+
+  document.getElementById('where').textContent = 'Website ' + d.step + ' of ' + d.total;
+  document.getElementById('prog').innerHTML = Array.from({ length: d.total }, function (_, i) {
+    return '<span class="' + (i + 1 < d.step ? 'on' : i + 1 === d.step ? 'cur' : '') + '"></span>'; }).join('');
+
+  function opt(name, value, text) { return '<label class="opt"><input type="radio" name="' + name + '" value="' + esc(value) + '">' + text + '</label>'; }
+  function stepWrap(inner, auto, title, help) {
+    return '<section class="step step-card"' + (auto ? ' data-auto' : '') + ' hidden><p class="eyebrow">' + site + '</p>' +
+      '<h2 class="q-title">' + title + '</h2>' + (help ? '<p class="q-help">' + help + '</p>' : '<div style="height:12px"></div>') + inner + '</section>';
+  }
+  var html = '';
+  // 1. choice
+  html += stepWrap(d.options.map(function (o) { return opt('pick', o, esc(o)); }).join(''), true, 'Based on the review, which would you pick?', 'Choose one.');
+  // 2. Paas mental effort (all 9 points labelled)
+  html += stepWrap(d.paas.labels.map(function (l, i) { return opt('effort', i + 1, '<span class="num">' + (i + 1) + '</span>' + esc(l)); }).join(''),
+    true, esc(d.paas.text), 'Choose the option that fits best.');
+  // 3. belief
+  html += stepWrap('<div class="row two">' + opt('believedTracked', 'yes', 'Yes') + opt('believedTracked', 'no', 'No') + '</div>', true,
+    'Do you think <u>' + site + '</u> recorded any information about you or your device while you were on it?', 'Your best guess is fine.');
+  // 4. confidence
+  html += stepWrap(opt('confidence', 1, 'Just guessing') + opt('confidence', 2, 'Somewhat sure') + opt('confidence', 3, 'Fairly sure') + opt('confidence', 4, 'Certain'),
+    true, 'How sure are you about that answer?', 'Choose one.');
+  // 5. checklist
+  html += stepWrap(d.checklist.map(function (c) { return '<label class="opt"><input type="checkbox" name="ck" value="' + c.id + '">' + esc(c.label) + '</label>'; }).join('') +
+    '<label class="opt"><input type="checkbox" id="none">None of these</label>',
+    false, 'Which of these, if any, do you think <u>' + site + '</u> collected?', 'Tick all that apply, then press Next.');
+  // 6–8. ratings
+  d.ratings.forEach(function (q) {
+    html += stepWrap('<div class="likert">' + [1, 2, 3, 4, 5, 6, 7].map(function (v) {
+      return '<label><input type="radio" name="r_' + q.id + '" value="' + v + '">' + v + '</label>'; }).join('') +
+      '</div><div class="likert-ends"><span>1 = ' + esc(q.low) + '</span><span>7 = ' + esc(q.high) + '</span></div>', true, esc(q.text), 'Tap a number from 1 to 7.');
+  });
+  document.getElementById('steps').innerHTML = html;
+
+  var none = document.getElementById('none'), cks = document.querySelectorAll('[name=ck]');
+  none.addEventListener('change', function () { if (none.checked) cks.forEach(function (c) { c.checked = false; c.closest('label').classList.remove('on'); }); });
+  cks.forEach(function (c) { c.addEventListener('change', function () { if (c.checked) { none.checked = false; none.closest('label').classList.remove('on'); } }); });
+
+  var f = document.getElementById('f'), err = document.getElementById('err');
+  var req = ['pick', 'effort', 'believedTracked', 'confidence', null].concat(d.ratings.map(function (q) { return 'r_' + q.id; }));
+  var msg = ['Please choose one option to continue.', 'Please choose a number to continue.', 'Please choose Yes or No to continue.',
+    'Please choose how sure you are to continue.', 'Please tick at least one item, or "None of these".'].concat(d.ratings.map(function () { return 'Please tap a number from 1 to 7.'; }));
+
+  UI.wizard({
+    root: f, next: document.getElementById('next'), back: document.getElementById('back'), err: err,
+    bar: document.getElementById('bar'), label: document.getElementById('steplabel'),
+    finishLabel: 'Done',
+    stepText: function (i, total) { return 'Question ' + (i + 1) + ' of ' + total; },
+    validate: function (i) {
+      var fd = new FormData(f);
+      if (req[i] === null) return (fd.getAll('ck').length || none.checked) ? '' : msg[i];
+      return fd.get(req[i]) ? '' : msg[i];
+    },
+    onFinish: async function () {
+      var fd = new FormData(f), btn = document.getElementById('next'), ratings = {};
+      d.ratings.forEach(function (q) { ratings[q.id] = fd.get('r_' + q.id); });
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try {
+        var res = await fetch('/api/p/' + pid + '/q/' + n, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pick: fd.get('pick'), effort: fd.get('effort'), believedTracked: fd.get('believedTracked'),
+            confidence: fd.get('confidence'), checklist: fd.getAll('ck'), ratings: ratings, answerMs: Math.round(performance.now() - t0) }) });
+        var j = await res.json();
+        if (!res.ok) throw new Error(j.error || 'Something went wrong.');
+        location.href = j.next;
+      } catch (e) {
+        err.textContent = (e.message || 'Something went wrong.') + ' Please try again.';
+        btn.disabled = false; btn.textContent = 'Done';
+      }
+    }
+  });
+})();
+</script>
+</body></html>

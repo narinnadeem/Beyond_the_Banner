@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A few more questions – Study</title>
+<link rel="stylesheet" href="/static/css/study.css"><link rel="stylesheet" href="/static/css/ui.css"></head>
+<body class="ui"><main class="shell">
+  <div class="topbar"><p class="brand-chip">Research study</p><span class="where">Almost done</span></div>
+  <div class="bar" id="bar" role="progressbar" aria-label="Progress"><i></i></div>
+  <div class="steplabel" id="steplabel">Loading…</div>
+
+  <form id="f" novalidate>
+    <div id="steps"></div>
+    <p class="error" id="err" role="alert" aria-live="assertive"></p>
+    <div class="actions">
+      <button type="button" class="secondary" id="back" hidden>← Back</button>
+      <span class="grow"></span>
+      <button type="button" class="next" id="next">Next →</button>
+    </div>
+  </form>
+</main>
+<script src="/static/js/ui.js"></script>
+<script>
+(async function () {
+  var esc = UI.esc;
+  var pid = location.pathname.split('/')[2];
+  var s;
+  try { s = await (await fetch('/api/scales')).json(); }
+  catch (e) { document.getElementById('steplabel').textContent = 'Could not load the questions. Please refresh the page.'; return; }
+
+  function wrap(part, partTitle, title, help, inner) {
+    return '<section class="step step-card" data-part="' + part + '" data-title="' + esc(partTitle) + '" hidden><p class="eyebrow">Part ' + part + ' of 4 · ' + esc(partTitle) + '</p>' +
+      (title ? '<h2 class="q-title">' + title + '</h2>' : '') + (help ? '<p class="q-help">' + help + '</p>' : '') + inner + '</section>';
+  }
+  function slider(x) {
+    return '<fieldset><legend>' + esc(x.text) + '</legend><div class="slider"><output id="tv_' + x.id + '">Drag to answer</output>' +
+      '<input type="range" min="0" max="100" step="5" value="50" name="t_' + x.id + '" data-touched="0" aria-label="' + esc(x.text) + '"></div>' +
+      '<div class="likert-ends"><span>' + esc(x.low) + '</span><span>' + esc(x.high) + '</span></div></fieldset>';
+  }
+  function tf(k) {
+    return '<fieldset><legend>' + esc(k.text) + '</legend><div class="row">' + ['true', 'false', 'dontknow'].map(function (v) {
+      return '<label class="opt"><input type="radio" name="k_' + k.id + '" value="' + v + '">' + (v === 'true' ? 'True' : v === 'false' ? 'False' : "Don't know") + '</label>'; }).join('') + '</div></fieldset>';
+  }
+  function likert(it) {
+    return '<fieldset><legend>' + esc(it.text) + '</legend><div class="likert">' + [1, 2, 3, 4, 5, 6, 7].map(function (v) {
+      return '<label><input type="radio" name="i_' + it.id + '" value="' + v + '">' + v + '</label>'; }).join('') +
+      '</div><div class="likert-ends"><span>1 = Strongly disagree</span><span>7 = Strongly agree</span></div></fieldset>';
+  }
+  var h = '';
+  h += wrap(1, 'Your judgements', 'How did you decide?', 'Please answer honestly. There are no right or wrong answers.',
+    '<fieldset><legend>For each website you were asked whether it recorded information about you. How did you decide?</legend>' +
+    '<textarea name="howDecided" placeholder="In your own words…" aria-label="How did you decide"></textarea></fieldset>' +
+    '<fieldset><legend>Which of these did you rely on? <span class="hint">Tick all that apply.</span></legend>' +
+    s.cues.map(function (c) { return '<label class="opt"><input type="checkbox" name="cues" value="' + c.id + '">' + esc(c.label) + '</label>'; }).join('') + '</fieldset>' +
+    '<fieldset><legend>Does the browser you used today have an ad-blocker or privacy protection turned on?</legend><div class="row">' +
+    [['yes', 'Yes'], ['no', 'No'], ['unsure', 'Not sure']].map(function (o) { return '<label class="opt"><input type="radio" name="privacyTools" value="' + o[0] + '">' + o[1] + '</label>'; }).join('') + '</div></fieldset>');
+  var half = Math.ceil(s.tlx.length / 2);
+  h += wrap(2, 'The task as a whole', 'How was the whole task?', 'Think about all four websites and their questions together. Move each slider to answer. Every slider must be moved at least once.',
+    s.tlx.slice(0, half).map(slider).join(''));
+  h += wrap(2, 'The task as a whole', 'How was the whole task?', 'Same idea: move each slider to answer.', s.tlx.slice(half).map(slider).join(''));
+  var kh = Math.ceil(s.knowledge.length / 2);
+  h += wrap(3, 'True or false?', 'True or false?', 'Choose "Don\'t know" rather than guessing.', s.knowledge.slice(0, kh).map(tf).join(''));
+  h += wrap(3, 'True or false?', 'True or false?', 'Choose "Don\'t know" rather than guessing.', s.knowledge.slice(kh).map(tf).join(''));
+  var ih = Math.ceil(s.iuipc.length / 2);
+  h += wrap(4, 'Your views on online privacy', 'How much do you agree?', 'Tap a number: 1 = strongly disagree, 7 = strongly agree.', s.iuipc.slice(0, ih).map(likert).join(''));
+  h += wrap(4, 'Your views on online privacy', 'How much do you agree?', 'Tap a number: 1 = strongly disagree, 7 = strongly agree.', s.iuipc.slice(ih).map(likert).join(''));
+  document.getElementById('steps').innerHTML = h;
+  UI.initSliders(document);
+
+  var f = document.getElementById('f'), err = document.getElementById('err');
+  var tlxA = s.tlx.slice(0, half), tlxB = s.tlx.slice(half), kA = s.knowledge.slice(0, kh), kB = s.knowledge.slice(kh), iA = s.iuipc.slice(0, ih), iB = s.iuipc.slice(ih);
+  function sliderMissing(list) { return list.filter(function (x) { return document.querySelector('[name=t_' + x.id + ']').dataset.touched !== '1'; }).length; }
+  function radioMissing(list, p, fd) { return list.filter(function (x) { return !fd.get(p + x.id); }).length; }
+
+  UI.wizard({
+    root: f, next: document.getElementById('next'), back: document.getElementById('back'), err: err,
+    bar: document.getElementById('bar'), label: document.getElementById('steplabel'), finishLabel: 'Finish',
+    stepText: function (i, total, el) { return 'Part ' + el.getAttribute('data-part') + ' of 4 · ' + el.getAttribute('data-title'); },
+    validate: function (i) {
+      var fd = new FormData(f), m = 0;
+      if (i === 0) {
+        if ((fd.get('howDecided') || '').trim().length < 5) return 'Please write a few words about how you decided.';
+        if (!fd.get('privacyTools')) return 'Please choose Yes, No or Not sure for the ad-blocker question.';
+        return '';
+      }
+      if (i === 1) m = sliderMissing(tlxA); else if (i === 2) m = sliderMissing(tlxB);
+      else if (i === 3) m = radioMissing(kA, 'k_', fd); else if (i === 4) m = radioMissing(kB, 'k_', fd);
+      else if (i === 5) m = radioMissing(iA, 'i_', fd); else m = radioMissing(iB, 'i_', fd);
+      return m ? 'Please answer every question on this screen (' + m + ' left).' : '';
+    },
+    onFinish: async function () {
+      var fd = new FormData(f), btn = document.getElementById('next');
+      var knowledge = {}, iuipc = {}, tlx = {};
+      s.tlx.forEach(function (x) { tlx[x.id] = Number(document.querySelector('[name=t_' + x.id + ']').value); });
+      s.knowledge.forEach(function (k) { knowledge[k.id] = fd.get('k_' + k.id); });
+      s.iuipc.forEach(function (it) { iuipc[it.id] = fd.get('i_' + it.id); });
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try {
+        var r = await fetch('/api/p/' + pid + '/final', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ howDecided: fd.get('howDecided'), cues: fd.getAll('cues'), privacyTools: fd.get('privacyTools'), knowledge: knowledge, iuipc: iuipc, tlx: tlx }) });
+        var j = await r.json();
+        if (!r.ok) throw new Error(j.error || 'Something went wrong.');
+        location.href = j.next;
+      } catch (e) {
+        err.textContent = (e.message || 'Something went wrong.') + ' Please try again.';
+        btn.disabled = false; btn.textContent = 'Finish';
+      }
+    }
+  });
+})();
+</script>
+</body></html>

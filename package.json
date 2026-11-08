@@ -1,0 +1,17 @@
+{
+  "name": "beyond-the-banner",
+  "version": "2.0.0",
+  "description": "Within-subjects experiment: do users judge web tracking by the consent banner or by the tracking itself?",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "simulate": "node scripts/simulate.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "optionalDependencies": {
+    "pg": "^8.11.0"
+  }
+}

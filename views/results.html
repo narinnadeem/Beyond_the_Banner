@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Results – Beyond the Banner</title><link rel="stylesheet" href="/static/css/study.css">
+<style>.wrap{max-width:960px}.bars{display:flex;gap:14px;align-items:flex-end;height:180px;margin:10px 0 4px}
+.bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;font-size:13px}
+.bar div{width:100%;background:var(--accent);border-radius:6px 6px 0 0}.bar.t div{background:var(--bad)}
+.warn{background:#fff4d6;border-color:#e8c766}</style></head>
+<body><main class="wrap">
+  <div class="brand">Researcher view</div>
+  <h1>Beyond the Banner — live results</h1>
+  <div id="warn"></div>
+  <div class="card"><a class="btn" href="/results/trials.csv">Trials CSV (one row per website)</a>
+    <a class="btn" href="/results/participants.csv">Participants CSV</a>
+    <a class="btn" href="/results/raw.json" style="background:#555">Raw JSON</a></div>
+  <div id="out" class="muted">Loading…</div>
+</main>
+<script>
+(async function () {
+  var s = await (await fetch('/results/summary.json')).json();
+  var w = '';
+  if (!s.iuipcVerified) w += '<p><strong>IUIPC-8 wording not verified.</strong> Replace the items in lib/scales.js with the published wording and set IUIPC8_VERIFIED = true before collecting real data.</p>';
+  if (s.store.backend === 'file') w += '<p><strong>Storage: local file.</strong> On Render this is wiped on restart. Set DATABASE_URL to a Postgres database before collecting real data.</p>';
+  if (w) document.getElementById('warn').innerHTML = '<div class="card warn">' + w + '</div>';
+  var lab = { B0T0: 'No banner · No tracking', B0T1: 'No banner · Tracking', B1T0: 'Banner · No tracking', B1T1: 'Banner · Tracking' };
+  function pct(x) { return x == null ? '—' : Math.round(x * 100) + '%'; }
+  function obj(o) { return Object.keys(o).map(function (k) { return k + ': ' + o[k]; }).join(' · ') || '—'; }
+  var c = s.cells, h = '';
+  h += '<div class="card"><div class="grid2"><div><div class="big">' + s.n.allFourSites + '</div><div class="muted">participants with all 4 websites answered</div></div>' +
+       '<div class="muted">Started: ' + s.n.started + ' · Fully completed: ' + s.n.completed + '<br>Latin-square rows: ' + obj(s.byOrder) + '<br>Field: ' + obj(s.byField) + '</div></div></div>';
+  h += '<div class="card"><h2 style="margin-top:0">H1/H2 — % who said "this website recorded data"</h2><div class="bars">' +
+    ['B0T0', 'B0T1', 'B1T0', 'B1T1'].map(function (k) { var v = c[k].yesRate || 0;
+      return '<div class="bar ' + (k[3] === '1' ? 't' : '') + '"><strong>' + pct(c[k].yesRate) + '</strong><div style="height:' + Math.round(v * 140) + 'px"></div>' + lab[k] + '</div>'; }).join('') +
+    '</div><p class="muted">Red = tracking actually ran. If beliefs follow the banner rather than the tracking, the two banner bars will be higher than the two no-banner bars, and red vs blue within each pair will look similar.</p>' +
+    '<table><tr><th>Condition</th><th>n</th><th>Said yes</th><th>Mean confidence (1–4)</th><th>Checklist hit rate</th><th>Checklist false-alarm rate</th><th>Blocked pages</th></tr>' +
+    ['B0T0', 'B0T1', 'B1T0', 'B1T1'].map(function (k) { var x = c[k]; return '<tr><td>' + lab[k] + '</td><td>' + x.n + '</td><td>' + pct(x.yesRate) + '</td><td>' + (x.meanConfidence ?? '—') + '</td><td>' + pct(x.checklistHitRate) + '</td><td>' + pct(x.checklistFalseAlarmRate) + '</td><td>' + x.blockedPages + '</td></tr>'; }).join('') + '</table></div>';
+  h += '<div class="card"><h2 style="margin-top:0">HCI ratings and cognitive load by condition (means)</h2><table><tr><th>Condition</th><th>Mental effort (1–9)</th><th>Trust (1–7)</th><th>Transparency (1–7)</th><th>Perceived control (1–7)</th><th>Median answer time (s)</th></tr>' +
+    ['B0T0', 'B0T1', 'B1T0', 'B1T1'].map(function (k) { var x = c[k]; return '<tr><td>' + lab[k] + '</td><td>' + (x.meanEffort ?? '—') + '</td><td>' + (x.meanTrust ?? '—') + '</td><td>' + (x.meanTransparency ?? '—') + '</td><td>' + (x.meanControl ?? '—') + '</td><td>' + (x.medianAnswerSec ?? '—') + '</td></tr>'; }).join('') +
+    '</table><p class="muted">Median time to click the banner: ' + (s.bannerDecisionSecMedian ?? '—') + ' s. NASA-TLX raw (0–100): ' + (s.tlxRaw ?? '—') + ' — ' + s.tlx.map(function (t) { return t.id + ' ' + (t.mean ?? '—'); }).join(' · ') + '</p></div>';
+  var wp = s.withinPerson;
+  h += '<div class="card"><h2 style="margin-top:0">Within-person effects (descriptive)</h2><div class="kv">' +
+    '<div>Banner effect on "yes" (banner − no banner)</div><div>' + (wp.bannerEffectOnYes ?? '—') + '</div>' +
+    '<div>Tracking effect on "yes" (tracked − untracked)</div><div>' + (wp.trackingEffectOnYes ?? '—') + '</div>' +
+    '<div>Mean sensitivity d′ (0 = cannot tell)</div><div>' + (wp.meanDprime ?? '—') + '</div>' +
+    '<div>Mean criterion c (negative = says "yes" readily)</div><div>' + (wp.meanCriterion ?? '—') + '</div></div>' +
+    '<p class="muted">Inferential tests are in analysis/analyze.py (run on the exported CSV).</p></div>';
+  h += '<div class="card"><h2 style="margin-top:0">First website only (before any priming)</h2><table><tr><th>Condition</th><th>n</th><th>Said yes</th></tr>' +
+    ['B0T0', 'B0T1', 'B1T0', 'B1T1'].map(function (k) { return '<tr><td>' + lab[k] + '</td><td>' + s.firstPageOnly[k].n + '</td><td>' + pct(s.firstPageOnly[k].yesRate) + '</td></tr>'; }).join('') + '</table></div>';
+  h += '<div class="card"><h2 style="margin-top:0">Manipulation & data quality</h2><div class="kv">' +
+    '<div>Banner clicks</div><div>' + obj(s.bannerActions) + '</div>' +
+    '<div>Rejected but still tracked</div><div>' + s.rejectedButTracked + '</div>' +
+    '<div>Tracker delivery on tracked pages (n=' + s.trackerDelivery.pages + ')</div><div>analytics ' + pct(s.trackerDelivery.analytics) + ' · fingerprint ' + pct(s.trackerDelivery.fingerprint) + ' · pixel ' + pct(s.trackerDelivery.pixel) + '</div>' +
+    '<div>Knowledge quiz mean (0–8)</div><div>' + (s.knowledgeMean ?? '—') + '</div><div>IUIPC mean (1–7)</div><div>' + (s.iuipcMean ?? '—') + '</div></div></div>';
+  h += '<div class="card"><h2 style="margin-top:0">Cues participants say they used (pre-reveal)</h2><table>' + s.cues.map(function (x) { return '<tr><td>' + x.label + '</td><td>' + x.count + '</td></tr>'; }).join('') + '</table></div>';
+  h += '<div class="card"><h2 style="margin-top:0">After the reveal</h2><div class="kv"><div>Surprise (1–5)</div><div>' + (s.reaction.surprise ?? '—') + '</div><div>Concern (1–5)</div><div>' + (s.reaction.concern ?? '—') + '</div>' +
+    '<div>Thought browser protected them</div><div>' + obj(s.reaction.assumedProtection) + '</div><div>Deleted device data</div><div>' + s.behaviour.deletedDeviceData + '</div><div>Opened protection tips</div><div>' + s.behaviour.openedTips + '</div></div></div>';
+  function esc(t) { return String(t || '').replace(/[&<>]/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch]; }); }
+  h += '<div class="card"><h2 style="margin-top:0">Open responses</h2><table><tr><th>Field</th><th>How they decided (pre-reveal)</th><th>After reveal</th></tr>' +
+    s.quotes.map(function (q) { return '<tr><td>' + esc(q.field) + '</td><td>' + esc(q.howDecided) + '</td><td>' + esc(q.feeling) + '</td></tr>'; }).join('') + '</table></div>';
+  document.getElementById('out').outerHTML = h;
+})();
+</script>
+</body></html>

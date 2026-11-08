@@ -1,0 +1,163 @@
+/* Participant-facing design for the study screens (consent, questions, final survey, reveal).
+   Loaded AFTER study.css and scoped to body.ui so the researcher dashboard is unchanged.
+   The four fictional review websites and the cookie banner are NOT styled here (they are stimuli). */
+body.ui {
+  --accent: #4338ca; --accent-dark: #3730a3; --accent-soft: #eef0ff; --accent-line: #c7cbff;
+  --ink: #1b1b2f; --muted: #595b70; --line: #dcdff0; --good: #1f7a4d; --bad: #b3322a;
+  --radius: 18px;
+  background: linear-gradient(180deg, #eef0ff 0%, #f8f9ff 260px, #ffffff 100%) fixed;
+  color: var(--ink); font-size: 18px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased; min-height: 100vh;
+}
+body.ui .shell { max-width: 680px; margin: 0 auto; padding: 20px 16px 120px; }
+body.ui .wrap { max-width: 680px; padding: 20px 16px 80px; }
+
+/* ---------- header + progress ---------- */
+body.ui .topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+body.ui .brand-chip { font-size: 14px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent);
+  background: #fff; border: 1px solid var(--accent-line); padding: 6px 12px; border-radius: 999px; margin: 0; }
+body.ui .where { font-size: 15px; color: var(--muted); font-weight: 600; }
+body.ui .sites-progress { display: flex; gap: 6px; margin: 0 0 10px; }
+body.ui .sites-progress span { flex: 1; height: 8px; border-radius: 4px; background: var(--line); transition: background .3s; }
+body.ui .sites-progress span.on { background: var(--accent); }
+body.ui .sites-progress span.cur { background: var(--accent-line); }
+body.ui .bar { height: 10px; border-radius: 6px; background: var(--line); overflow: hidden; margin-bottom: 8px; }
+body.ui .bar > i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #6366f1, var(--accent)); border-radius: 6px; transition: width .45s cubic-bezier(.2,.8,.2,1); }
+body.ui .steplabel { font-size: 15px; color: var(--muted); font-weight: 600; margin-bottom: 14px; }
+
+/* ---------- cards + steps ---------- */
+body.ui .card, body.ui .step-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 28px; margin: 16px 0; box-shadow: 0 8px 28px rgba(67,56,202,.07); }
+body.ui .step { animation: stepIn .35s cubic-bezier(.2,.8,.2,1); }
+body.ui .step[hidden] { display: none; }
+@keyframes stepIn { from { opacity: 0; transform: translateX(22px); } to { opacity: 1; transform: none; } }
+body.ui .step.back { animation-name: stepInBack; }
+@keyframes stepInBack { from { opacity: 0; transform: translateX(-22px); } to { opacity: 1; transform: none; } }
+body.ui .eyebrow { font-size: 14px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin: 0 0 8px; }
+body.ui h1 { font-size: 32px; line-height: 1.2; margin: 0 0 14px; letter-spacing: -.01em; }
+body.ui h2 { font-size: 22px; margin: 0 0 10px; }
+body.ui .q-title { font-size: 25px; line-height: 1.3; font-weight: 700; margin: 0 0 6px; padding: 0; outline: none; }
+body.ui .q-help { font-size: 16px; color: var(--muted); margin: 0 0 18px; }
+body.ui .lede { font-size: 20px; color: #34364d; margin: 0 0 22px; }
+body.ui .muted { font-size: 16px; color: var(--muted); }
+body.ui fieldset { border: 0; padding: 0; margin: 0 0 26px; min-width: 0; }
+body.ui legend { font-size: 20px; font-weight: 700; line-height: 1.35; margin-bottom: 12px; padding: 0; }
+body.ui fieldset:last-child { margin-bottom: 0; }
+
+/* ---------- fact tiles (welcome screen) ---------- */
+body.ui .facts { display: grid; gap: 12px; margin: 0 0 20px; }
+body.ui .fact { display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px; background: var(--accent-soft); border-radius: 14px; border-left: 5px solid var(--accent); }
+body.ui .fact .ico { font-size: 28px; line-height: 1.2; }
+body.ui .fact b { display: block; font-size: 18px; }
+body.ui .fact span.t { font-size: 16px; color: #3d3f58; }
+
+/* ---------- inputs: hide native control, show big tappable choices ---------- */
+body.ui label input[type=radio], body.ui label input[type=checkbox] { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+body.ui label.opt { position: relative; display: flex; align-items: center; gap: 14px; min-height: 58px; padding: 14px 16px; margin: 10px 0;
+  border: 2px solid var(--line); border-radius: 14px; background: #fff; cursor: pointer; font-size: 18px; line-height: 1.4;
+  transition: border-color .15s, background .15s, transform .12s, box-shadow .15s; -webkit-tap-highlight-color: transparent; }
+body.ui label.opt::before { content: ""; flex: 0 0 24px; height: 24px; border: 2px solid #a5a8c4; border-radius: 50%; background: #fff;
+  transition: all .15s; }
+body.ui label.opt:has(input[type=checkbox])::before, body.ui label.opt.is-check::before { border-radius: 7px; }
+body.ui label.opt:hover { border-color: var(--accent-line); background: #fafaff; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(67,56,202,.10); }
+body.ui label.opt.on { border-color: var(--accent); background: var(--accent-soft); }
+body.ui label.opt.on::before { border-color: var(--accent); background: var(--accent) center/14px no-repeat
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.5l3.2 3.2L13 4.8' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+body.ui label.opt:active { transform: scale(.985); }
+body.ui label.opt:focus-within { outline: 3px solid #8b8ff5; outline-offset: 2px; }
+body.ui .opt .num { font-weight: 800; color: var(--accent); min-width: 1.2em; }
+body.ui .row { display: flex; gap: 12px; flex-wrap: wrap; }
+body.ui .row label.opt { flex: 1 1 200px; }
+body.ui .row.two label.opt { flex: 1 1 45%; justify-content: center; }
+
+/* ---------- rating scales ---------- */
+body.ui .likert { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+body.ui .likert.five { grid-template-columns: repeat(5, 1fr); }
+body.ui .likert label { position: relative; display: flex; align-items: center; justify-content: center; min-height: 60px; padding: 0;
+  border: 2px solid var(--line); border-radius: 14px; background: #fff; cursor: pointer; font-size: 22px; font-weight: 700; color: var(--ink);
+  transition: all .15s; -webkit-tap-highlight-color: transparent; }
+body.ui .likert label:hover { border-color: var(--accent-line); background: #fafaff; transform: translateY(-2px); }
+body.ui .likert label.on { background: var(--accent); border-color: var(--accent); color: #fff; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(67,56,202,.35); }
+body.ui .likert label:focus-within { outline: 3px solid #8b8ff5; outline-offset: 2px; }
+body.ui .likert label:active { transform: scale(.96); }
+body.ui .likert-ends { display: flex; justify-content: space-between; gap: 12px; font-size: 15px; color: var(--muted); margin-top: 10px; font-weight: 600; }
+
+/* ---------- slider ---------- */
+body.ui .slider { position: relative; padding: 34px 4px 4px; }
+body.ui input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 12px; border-radius: 8px; outline: none; cursor: pointer;
+  background: linear-gradient(90deg, var(--accent) var(--pct, 0%), #dfe2f3 var(--pct, 0%)); margin: 8px 0; }
+body.ui .slider:not(.set) input[type=range] { background: #dfe2f3; }
+body.ui input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 34px; height: 34px; border-radius: 50%; background: var(--accent);
+  border: 4px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,.3); transition: transform .12s; }
+body.ui input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); border: 4px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,.3); }
+body.ui .slider:not(.set) input[type=range]::-webkit-slider-thumb { background: #9a9db8; }
+body.ui .slider:not(.set) input[type=range]::-moz-range-thumb { background: #9a9db8; }
+body.ui input[type=range]:active::-webkit-slider-thumb { transform: scale(1.15); }
+body.ui input[type=range]:focus-visible { outline: 3px solid #8b8ff5; outline-offset: 6px; }
+body.ui .slider output { position: absolute; top: 0; left: 4px; font-weight: 800; font-size: 16px; color: var(--accent); background: var(--accent-soft);
+  padding: 2px 12px; border-radius: 999px; }
+body.ui .slider:not(.set) output { color: var(--muted); background: #f0f1f7; font-weight: 600; }
+
+/* ---------- text input ---------- */
+body.ui textarea, body.ui select { font-size: 18px; padding: 14px; border: 2px solid var(--line); border-radius: 14px; min-height: 120px; transition: border-color .15s; }
+body.ui textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px #e0e2ff; }
+
+/* ---------- buttons ---------- */
+body.ui button, body.ui .btn { font: inherit; font-size: 18px; font-weight: 700; min-height: 56px; padding: 14px 28px; border: 0; border-radius: 14px;
+  background: var(--accent); color: #fff; cursor: pointer; transition: transform .12s, box-shadow .15s, background .15s; -webkit-tap-highlight-color: transparent; }
+body.ui button:hover:not(:disabled) { background: var(--accent-dark); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(67,56,202,.3); }
+body.ui button:active:not(:disabled) { transform: scale(.98); }
+body.ui button:focus-visible { outline: 3px solid #8b8ff5; outline-offset: 3px; }
+body.ui button.secondary { background: #fff; color: var(--accent); border: 2px solid var(--accent-line); }
+body.ui button.secondary:hover:not(:disabled) { background: var(--accent-soft); box-shadow: none; }
+body.ui button:disabled { opacity: .55; cursor: not-allowed; }
+body.ui .actions { position: sticky; bottom: 0; display: flex; gap: 12px; justify-content: space-between; align-items: center;
+  padding: 14px 0 calc(14px + env(safe-area-inset-bottom)); margin-top: 8px;
+  background: linear-gradient(180deg, rgba(255,255,255,0), #fff 28%); }
+body.ui .actions .grow { flex: 1; }
+body.ui .actions button.next { min-width: 160px; }
+body.ui .hint { font-size: 15px; color: var(--muted); }
+
+/* ---------- messages ---------- */
+body.ui .error { color: var(--bad); font-weight: 700; font-size: 16px; min-height: 0; margin: 0 0 8px; }
+body.ui .error:not(:empty) { background: #fdeceb; border: 1px solid #f3b8b3; border-radius: 12px; padding: 10px 14px; animation: shake .35s; }
+@keyframes shake { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
+
+/* ---------- reveal page ---------- */
+body.ui .kv { font-size: 16px; }
+body.ui .kv div:nth-child(even) { font-size: 15px; }
+body.ui table { font-size: 16px; }
+body.ui th, body.ui td { padding: 10px 8px; }
+body.ui .tag { font-size: 14px; padding: 4px 10px; }
+body.ui details summary { cursor: pointer; font-weight: 700; color: var(--accent); padding: 8px 0; }
+body.ui .score { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+body.ui .ring { --p: 0; width: 120px; height: 120px; border-radius: 50%; display: grid; place-items: center; flex: 0 0 auto;
+  background: conic-gradient(var(--accent) calc(var(--p) * 1%), #e4e6f5 0); transition: --p 1s; }
+body.ui .ring > div { width: 94px; height: 94px; border-radius: 50%; background: #fff; display: grid; place-items: center; font-size: 30px; font-weight: 800; }
+body.ui .done-card { text-align: center; }
+body.ui .done-card .tick { width: 84px; height: 84px; border-radius: 50%; background: var(--good); color: #fff; display: grid; place-items: center;
+  font-size: 46px; margin: 4px auto 14px; animation: pop .5s cubic-bezier(.2,1.6,.4,1); }
+@keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+body.ui .left { text-align: left; }
+
+@media (max-width: 520px) {
+  body.ui { font-size: 17px; }
+  body.ui .card, body.ui .step-card { padding: 20px 16px; }
+  body.ui h1 { font-size: 27px; }
+  body.ui .q-title { font-size: 22px; }
+  body.ui .likert { gap: 4px; }
+  body.ui .likert label { min-height: 56px; font-size: 20px; border-radius: 12px; }
+  body.ui .actions button.next { flex: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.ui *, body.ui *::before, body.ui *::after { animation: none !important; transition: none !important; }
+}
+
+/* Keep answers clear of the sticky Back/Next bar (also satisfies WCAG 2.4.11 "focus not obscured") */
+body.ui label.opt, body.ui .likert label, body.ui textarea, body.ui input[type=range], body.ui .q-title { scroll-margin-top: 90px; scroll-margin-bottom: 130px; }
+body.ui .actions { pointer-events: none; }
+body.ui .actions > * { pointer-events: auto; }
+
+/* study.css sets display on buttons, which would override the hidden attribute */
+body.ui [hidden] { display: none !important; }
+body.ui h1:focus, body.ui .q-title:focus { outline: none; }

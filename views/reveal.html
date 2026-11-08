@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>What really happened – Study</title><link rel="stylesheet" href="/static/css/study.css"><link rel="stylesheet" href="/static/css/ui.css"></head>
+<body class="ui"><main class="shell">
+  <div class="topbar"><p class="brand-chip">Research study</p><span class="where">The reveal</span></div>
+  <h1>Here's what really happened on the four websites</h1>
+  <div class="card">
+    <p>The study was not really about reviews. We wanted to know <strong>whether people can tell when a website collects data about them</strong>,
+      and whether a cookie notice changes that judgement. To test this, some of the websites ran real data collection in the background
+      and some did not, and some showed a cookie notice and some did not. All four websites and businesses are fictional.</p>
+    <p>Everything below was collected <strong>by this study's own server only</strong>. Nothing was sent to advertisers or any other company.</p>
+  </div>
+  <div class="card" id="score"></div>
+  <div id="pages"></div>
+
+  <form id="react" class="card">
+    <h2>Your reaction</h2>
+    <p class="muted" style="margin-top:0">Just three quick questions. The last one is optional.</p>
+    <fieldset><legend>How surprised are you by what was collected?</legend>
+      <div class="likert five">
+        <label><input type="radio" name="surprise" value="1">1</label><label><input type="radio" name="surprise" value="2">2</label>
+        <label><input type="radio" name="surprise" value="3">3</label><label><input type="radio" name="surprise" value="4">4</label>
+        <label><input type="radio" name="surprise" value="5">5</label>
+      </div><div class="likert-ends"><span>Not at all surprised</span><span>Extremely surprised</span></div></fieldset>
+    <fieldset><legend>How concerned are you that real websites could collect this kind of data?</legend>
+      <div class="likert five">
+        <label><input type="radio" name="concern" value="1">1</label><label><input type="radio" name="concern" value="2">2</label>
+        <label><input type="radio" name="concern" value="3">3</label><label><input type="radio" name="concern" value="4">4</label>
+        <label><input type="radio" name="concern" value="5">5</label>
+      </div><div class="likert-ends"><span>Not at all concerned</span><span>Extremely concerned</span></div></fieldset>
+    <fieldset><legend>Before today, did you think your browser automatically stopped this kind of data collection?</legend>
+      <div class="row">
+        <label class="opt"><input type="radio" name="assumedProtection" value="yes">Yes</label>
+        <label class="opt"><input type="radio" name="assumedProtection" value="no">No</label>
+        <label class="opt"><input type="radio" name="assumedProtection" value="never_thought">Never thought about it</label>
+      </div></fieldset>
+    <fieldset><legend>Anything you would like to say about what you saw? (optional)</legend>
+      <textarea name="feeling"></textarea></fieldset>
+    <p class="error" id="err"></p>
+    <button type="submit" style="width:100%">Submit my answers</button>
+  </form>
+
+  <div id="debrief" hidden>
+    <div class="card">
+      <div class="tick" aria-hidden="true"><svg width="44" height="44" viewBox="0 0 16 16"><path d="M3 8.5l3.2 3.2L13 4.8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h2 style="text-align:center">Thank you, you're done!</h2>
+      <p>Why we did not tell you the purpose at the start: if you had known, you would have looked for signs of tracking,
+        and we could not have measured how people judge websites normally.</p>
+      <p>Real websites use the same techniques you saw here: measuring how you read a page, building a "fingerprint" of your device
+        from its settings, and loading invisible images. A cookie notice does not tell you whether these are happening,
+        and some websites keep collecting after you click "Reject".</p>
+      <p>Your answers are stored on the study server and will be deleted when the project ends. They are reported only as group statistics.</p>
+    </div>
+    <div class="card">
+      <h2>Your choices</h2>
+      <p><button type="button" class="secondary" id="tips">Show me how to reduce this kind of tracking</button></p>
+      <div id="tipbox" hidden>
+        <ul>
+          <li>Use a browser with built-in tracking and fingerprinting protection (for example Firefox with strict protection, or Brave).</li>
+          <li>Install a reputable content blocker such as uBlock Origin; it blocks many tracking scripts and pixels.</li>
+          <li>Keep your browser updated; vendors add new anti-fingerprinting defences regularly.</li>
+          <li>Remember that "Reject all" on a banner only covers what that website chooses to honour.</li>
+        </ul>
+      </div>
+      <p><button type="button" class="secondary" id="del">Delete the device data collected about me</button>
+        <span class="muted" id="delmsg"></span></p>
+      <p class="muted">This removes the collected values shown above but keeps your survey answers.
+        To remove <em>everything</em>, including your answers, <button type="button" class="secondary" id="wd" style="padding:4px 10px">withdraw from the study</button>.</p>
+    </div>
+  </div>
+</main>
+<script src="/static/js/ui.js"></script>
+<script>
+(async function () {
+  var pid = location.pathname.split('/')[2];
+  var r = await fetch('/api/p/' + pid + '/reveal'); var d = await r.json();
+  if (!r.ok) { if (d.next) location.href = d.next; return; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var conf = { 1: 'just guessing', 2: 'somewhat sure', 3: 'fairly sure', 4: 'certain' };
+  document.getElementById('score').innerHTML = '<div class="score"><div class="ring" id="ring" role="img" aria-label="' + d.correctCount + ' out of 4 correct"><div>' + d.correctCount + ' / 4</div></div>' +
+    '<div style="flex:1 1 220px"><h2 style="margin:0 0 6px">websites you judged correctly</h2><div class="muted">A correct judgement means you said "yes" for a website that collected data, or "no" for one that collected nothing.</div></div></div>';
+  (function () { var ring = document.getElementById('ring'), target = d.correctCount / 4 * 100, v = 0;
+    (function step() { v = Math.min(target, v + 3); ring.style.setProperty('--p', v); if (v < target) requestAnimationFrame(step); })(); })();
+
+  document.getElementById('pages').innerHTML = d.pages.map(function (p) {
+    var reality = p.actuallyTracked ? '<span class="tag yes">Collected data</span>' : p.blocked ? '<span class="tag neutral">Tried, but your browser blocked it</span>' : '<span class="tag no">Collected nothing</span>';
+    var notice = p.banner ? 'Yes' + (p.bannerAction === 'accept' ? ' — you clicked Accept' : p.bannerAction === 'reject' ? ' — you clicked Reject' : ' — you did not click it') : 'No';
+    var note = '';
+    if (p.banner && p.tracked && p.bannerAction === 'reject') note = '<p><strong>You clicked "Reject all", but collection had already started when the page loaded and carried on.</strong> Measurement studies have found real websites doing this.</p>';
+    if (p.banner && !p.tracked) note = '<p>This website showed a cookie notice but collected nothing at all. A notice is not evidence of tracking.</p>';
+    if (!p.banner && p.tracked) note = '<p>This website showed no notice and asked nothing, yet collected the data below.</p>';
+    if (p.partialBlock) note += '<p class="muted">Part of the collection was blocked by your browser.</p>';
+    var ck = '<table><tr><th>Item</th><th>You ticked</th><th>Actually collected</th></tr>' + p.checklist.map(function (c) {
+      return '<tr><td>' + esc(c.label) + '</td><td>' + (c.ticked ? 'Yes' : '—') + '</td><td class="' + (c.truth ? 'ck-yes' : '') + '">' + (c.truth ? 'Yes' : 'No') + '</td></tr>'; }).join('') + '</table>';
+    var data = p.collected.length ? '<h2 style="font-size:16px">What was collected from your visit</h2><div class="kv">' + p.collected.map(function (kv) { return '<div>' + esc(kv[0]) + '</div><div>' + esc(kv[1]) + '</div>'; }).join('') + '</div>' : (d.deleted && p.actuallyTracked ? '<p class="muted">You deleted the collected values.</p>' : '');
+    return '<div class="card"><h2 style="margin-top:0">' + p.position + '. ' + esc(p.site) + '</h2>' +
+      '<div class="kv" style="margin-bottom:10px"><div>Cookie notice shown</div><div>' + notice + '</div><div>Your answer</div><div>' + (p.believedTracked === 'yes' ? 'Recorded data' : 'Did not record data') + ' (' + conf[p.confidence] + ')' + (p.judgedCorrectly ? ' (correct)' : ' (incorrect)') + '</div><div>Reality</div><div>' + reality + '</div></div>' +
+      note + data + '<details style="margin-top:10px"><summary>Your checklist vs. reality</summary>' + ck + '</details></div>';
+  }).join('');
+
+  function post(path, body) { return fetch('/api/p/' + pid + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }); }
+  document.getElementById('react').addEventListener('submit', async function (e) {
+    e.preventDefault(); var fd = new FormData(this);
+    if (!fd.get('surprise') || !fd.get('concern') || !fd.get('assumedProtection')) { document.getElementById('err').textContent = 'Please answer the first three questions.'; return; }
+    await post('/reaction', { surprise: fd.get('surprise'), concern: fd.get('concern'), assumedProtection: fd.get('assumedProtection'), feeling: fd.get('feeling') });
+    this.hidden = true; document.getElementById('debrief').hidden = false; document.getElementById('debrief').scrollIntoView({ behavior: 'smooth' });
+  });
+  document.getElementById('tips').onclick = function () { document.getElementById('tipbox').hidden = false; post('/behaviour', { action: 'tips' }); };
+  document.getElementById('del').onclick = async function () { await post('/behaviour', { action: 'delete_device_data' }); this.disabled = true; document.getElementById('delmsg').textContent = ' Deleted.';
+    document.querySelectorAll('.kv + .kv, h2 + .kv').forEach(function (n) { if (n.previousElementSibling && n.previousElementSibling.tagName === 'H2' && /collected/.test(n.previousElementSibling.textContent)) { n.previousElementSibling.remove(); n.innerHTML = '<div>Collected values</div><div>deleted</div>'; } }); };
+  document.getElementById('wd').onclick = async function () {
+    if (!confirm('Withdraw and delete all your answers? This cannot be undone.')) return;
+    await post('/withdraw'); document.querySelector('main').innerHTML = '<div class="card"><h1>Withdrawn</h1><p>All your data has been deleted. Thank you.</p></div>'; };
+})();
+</script>
+</body></html>

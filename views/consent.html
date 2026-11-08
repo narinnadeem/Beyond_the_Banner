@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Judging Online Reviews – Study</title>
+<link rel="stylesheet" href="/static/css/study.css"><link rel="stylesheet" href="/static/css/ui.css"></head>
+<body class="ui"><main class="shell">
+  <div class="topbar"><p class="brand-chip">Research study</p><span class="where" id="steplabel"></span></div>
+  <div class="bar" id="bar" role="progressbar" aria-label="Progress"><i></i></div>
+
+  <form id="f" novalidate>
+    <!-- 0: welcome -->
+    <section class="step step-card">
+      <h1>How do people judge online reviews?</h1>
+      <p class="lede">Thank you for helping with our research. It's quick, anonymous, and there are no right or wrong answers.</p>
+      <div class="facts">
+        <div class="fact"><div><b>Four short review websites</b>
+          <span class="t">Each compares two local businesses in Karachi. After each one, you answer a few quick questions.</span></div></div>
+        <div class="fact"><div><b>About 15–18 minutes</b>
+          <span class="t">Please use the device and browser you normally use, and don't switch to private / incognito mode.</span></div></div>
+        <div class="fact"><div><b>Anonymous</b>
+          <span class="t">We never ask for your name, email or phone number.</span></div></div>
+      </div>
+    </section>
+
+    <!-- 1: field -->
+    <section class="step step-card" data-auto hidden>
+      <p class="eyebrow">About you · 1 of 3</p>
+      <h2 class="q-title">What is your main area of study or work?</h2>
+      <p class="q-help">Choose one.</p>
+      <label class="opt"><input type="radio" name="field" value="computing">Computing (CS, SE, IT, data science, or similar)</label>
+      <label class="opt"><input type="radio" name="field" value="non_computing">Something else</label>
+    </section>
+
+    <!-- 2: age -->
+    <section class="step step-card" data-auto hidden>
+      <p class="eyebrow">About you · 2 of 3</p>
+      <h2 class="q-title">How old are you?</h2>
+      <p class="q-help">Choose your age group.</p>
+      <div class="row two">
+        <label class="opt"><input type="radio" name="ageRange" value="18-21">18–21</label>
+        <label class="opt"><input type="radio" name="ageRange" value="22-25">22–25</label>
+        <label class="opt"><input type="radio" name="ageRange" value="26-35">26–35</label>
+        <label class="opt"><input type="radio" name="ageRange" value="36+">36+</label>
+      </div>
+    </section>
+
+    <!-- 3: device -->
+    <section class="step step-card" data-auto hidden>
+      <p class="eyebrow">About you · 3 of 3</p>
+      <h2 class="q-title">Which device are you using right now?</h2>
+      <p class="q-help">Choose one.</p>
+      <label class="opt"><input type="radio" name="device" value="phone">Phone</label>
+      <label class="opt"><input type="radio" name="device" value="laptop_desktop">Laptop / desktop</label>
+      <label class="opt"><input type="radio" name="device" value="tablet">Tablet</label>
+    </section>
+
+    <!-- 4: consent -->
+    <section class="step step-card" hidden>
+      <p class="eyebrow">Last step</p>
+      <h2 class="q-title">Before you begin</h2>
+      <div class="facts" style="margin-top:14px">
+        <div class="fact"><div><b>Your data</b>
+          <span class="t">Your answers are used only for academic research and reported as group results.</span></div></div>
+        <div class="fact"><div><b>You're in control</b>
+          <span class="t">You can stop at any time by closing the page, and you can delete your data at the end.</span></div></div>
+        <div class="fact"><div><b>Full explanation at the end</b>
+          <span class="t">Some details of the study's purpose are explained once you finish, so they don't influence your answers.</span></div></div>
+      </div>
+      <p class="muted">Questions about the study? Ask the person who shared this link with you.</p>
+      <label class="opt"><input type="checkbox" id="consent">I am 18 or older, I have read the information above, and I agree to take part.</label>
+    </section>
+
+    <p class="error" id="err" role="alert" aria-live="assertive"></p>
+    <div class="actions">
+      <button type="button" class="secondary" id="back" hidden>← Back</button>
+      <span class="grow"></span>
+      <button type="button" class="next" id="next">Get started →</button>
+    </div>
+  </form>
+</main>
+<script src="/static/js/ui.js"></script>
+<script>
+(function () {
+  var f = document.getElementById('f'), err = document.getElementById('err');
+  var names = [null, 'field', 'ageRange', 'device'];
+  var msgs = [null, 'Please choose one option to continue.', 'Please choose your age group to continue.', 'Please choose a device to continue.'];
+  UI.wizard({
+    root: f, next: document.getElementById('next'), back: document.getElementById('back'), err: err,
+    bar: document.getElementById('bar'), label: document.getElementById('steplabel'),
+    firstLabel: 'Get started →', finishLabel: 'Start the study →',
+    stepText: function (i, n) { return i === 0 ? 'Welcome' : 'Step ' + (i + 1) + ' of ' + n; },
+    validate: function (i) {
+      if (names[i] && !new FormData(f).get(names[i])) return msgs[i];
+      if (i === 4 && !document.getElementById('consent').checked) return 'Please tick the box to confirm you agree to take part.';
+      return '';
+    },
+    onFinish: async function () {
+      var fd = new FormData(f), btn = document.getElementById('next');
+      btn.disabled = true; btn.textContent = 'Starting…';
+      try {
+        var r = await fetch('/api/start', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ consent: true, field: fd.get('field'), ageRange: fd.get('ageRange'), device: fd.get('device') }) });
+        var j = await r.json();
+        if (!r.ok) throw new Error(j.error || 'Something went wrong.');
+        location.href = j.next;
+      } catch (e) {
+        err.textContent = (e.message || 'Something went wrong.') + ' Please try again.';
+        btn.disabled = false; btn.textContent = 'Start the study →';
+      }
+    }
+  });
+})();
+</script>
+</body></html>

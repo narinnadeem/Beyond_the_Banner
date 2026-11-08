@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{TITLE}} | {{SITE_NAME}}</title>
+<link rel="stylesheet" href="/static/css/sites.css">
+{{TRACKERS}}
+</head>
+<body class="{{THEME}}">
+<div class="studybar" role="region" aria-label="Study instructions">
+  <div class="sb-text" aria-live="polite"><strong id="sbt">Website {{STEP}} of 4</strong><span id="sbs">Read the review and decide which option you would pick.</span></div>
+  <div class="sb-actions"><button id="keep" type="button" class="keep" hidden>Keep reading</button><button id="done" type="button">I've finished reading</button></div>
+  <div class="sb-prog" aria-hidden="true"><i id="sbp"></i></div>
+</div>
+<header class="site-head">
+  <div class="site-inner">
+    <span class="logo">{{SITE_NAME}}</span>
+  </div>
+  <div class="site-inner tagline">{{TAGLINE}}</div>
+</header>
+<main class="site-inner article">
+  <div class="cat">{{CATEGORY}}</div>
+  <h1>{{TITLE}}</h1>
+  <div class="byline">By the {{SITE_NAME}} team · 6 min read</div>
+  {{BODY}}
+  <aside class="note">Prices checked in October 2026 and may have changed.</aside>
+</main>
+<footer class="site-foot"><div class="site-inner">© 2026 {{SITE_NAME}} · Independent local reviews</div></footer>
+{{BANNER}}
+<script>
+(function () {
+  var btn = document.getElementById('done'), keep = document.getElementById('keep'), sbp = document.getElementById('sbp');
+  var sbt = document.getElementById('sbt'), sbs = document.getElementById('sbs');
+  var total = 40, elapsed = 0, ready = false, confirming = false;
+  var T0 = sbt.textContent, S0 = 'Read the review and decide which option you would pick.';
+  // The bar fills over a suggested 40 s, but nobody is locked in: a quick reader can continue any time.
+  (function tick() {
+    if (sbp) sbp.style.width = Math.min(100, Math.round(elapsed / total * 100)) + '%';
+    if (elapsed >= total) { ready = true; btn.classList.add('ready'); return; }
+    elapsed++; setTimeout(tick, 1000);
+  })();
+  function go() {
+    if (window.__flushA) window.__flushA();
+    setTimeout(function () { location.href = '{{NEXT}}'; }, 150);
+  }
+  btn.addEventListener('click', function () {
+    if (ready || confirming) { go(); return; }
+    confirming = true;
+    sbt.textContent = 'Finished already?'; sbs.textContent = 'Most people take about 40 seconds. Make sure you have read both options.';
+    btn.textContent = 'Yes, continue'; keep.hidden = false;
+  });
+  keep.addEventListener('click', function () {
+    confirming = false; keep.hidden = true; btn.textContent = "I've finished reading"; sbt.textContent = T0; sbs.textContent = S0;
+  });
+  var b = document.getElementById('cookie-banner');
+  if (b) {
+    b.querySelectorAll('[data-act]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        var act = el.getAttribute('data-act');
+        if (act === 'more') { document.getElementById('cb-more').hidden = !document.getElementById('cb-more').hidden; return; }
+        fetch('{{BANNER_ENDPOINT}}', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: act, msSinceLoad: Math.round(performance.now()) }) });
+        b.remove();
+      });
+    });
+  }
+})();
+</script>
+</body></html>
